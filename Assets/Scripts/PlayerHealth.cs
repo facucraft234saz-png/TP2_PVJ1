@@ -3,44 +3,64 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
-    [Header("Vida del jugador")]
-    public int maxHealth = 100;
+    [Header("Vida")]
+    public float maxHealth = 100f;
+    public float currentHealth;
 
-    public int CurrentHealth { get; private set; }
+    [Header("Regeneracion")]
+    public float regenerationPerSecond = 1f;
 
     void Awake()
     {
-        CurrentHealth = maxHealth;
-        Debug.Log("Vida del jugador: " + CurrentHealth);
+        currentHealth = maxHealth;
     }
 
-    public void TakeDamage(int damage)
+    void Update()
     {
-        if (damage <= 0 || CurrentHealth <= 0)
-            return;
-
-        CurrentHealth -= damage;
-        CurrentHealth = Mathf.Max(CurrentHealth, 0);
-
-        Debug.Log("El jugador recibio daño. Vida: " +
-                  CurrentHealth + "/" + maxHealth);
-
-        if (CurrentHealth == 0)
+        if (currentHealth > 0f && currentHealth < maxHealth)
         {
-            Debug.Log("El jugador se quedo sin vida");
+            currentHealth += regenerationPerSecond * Time.deltaTime;
+            currentHealth = Mathf.Min(currentHealth, maxHealth);
         }
     }
 
-    public void Heal(int amount)
+    public void TakeDamage(float damage)
     {
-        if (amount <= 0 || CurrentHealth <= 0)
+        if (damage <= 0f || currentHealth <= 0f)
             return;
 
-        CurrentHealth = Mathf.Min(
-            CurrentHealth + amount,
-            maxHealth
+        currentHealth -= damage;
+        currentHealth = Mathf.Max(currentHealth, 0f);
+
+        Debug.Log(
+            "Vida del jugador: " +
+            Mathf.CeilToInt(currentHealth) + "/" +
+            Mathf.CeilToInt(maxHealth)
         );
 
-        Debug.Log("Vida recuperada: " + CurrentHealth);
+
+        if (currentHealth <= 0f)
+        {
+            currentHealth = 0f;
+
+            Debug.Log("El jugador se quedo sin vida");
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.LoseGame();
+            }
+        }
+    }
+
+
+    public void Heal(float amount)
+    {
+        if (amount <= 0f || currentHealth <= 0f)
+            return;
+
+        currentHealth = Mathf.Min(
+            currentHealth + amount,
+            maxHealth
+        );
     }
 }

@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -8,6 +7,13 @@ public class DroneAI : MonoBehaviour
     [Header("Referencias")]
     public Transform player;
     public Transform[] patrolPoints;
+
+    [Header("Visualización de Rango")]
+    public Transform visionRangeObject; // Arrastra aquí el objeto hijo "VisionRange"
+
+    [Header("Daño al jugador")]
+    public float damagePerSecond = 10f;
+    private float damageTimer = 0f;
 
     [Header("Configuracion")]
     public float patrolSpeed = 2f;
@@ -28,6 +34,7 @@ public class DroneAI : MonoBehaviour
     void Start()
     {
         agent.speed = patrolSpeed;
+        UpdateVisionRangeScale();
 
         if (patrolPoints.Length > 0)
         {
@@ -37,6 +44,9 @@ public class DroneAI : MonoBehaviour
 
     void Update()
     {
+        // Actualiza el tamaño dinámicamente si cambias la distancia en tiempo de ejecución
+        UpdateVisionRangeScale();
+
         if (player == null || patrolPoints.Length == 0)
             return;
 
@@ -96,6 +106,22 @@ public class DroneAI : MonoBehaviour
         }
     }
 
+    // Actualiza la escala del objeto visual automáticamente
+    void UpdateVisionRangeScale()
+    {
+        if (visionRangeObject != null)
+        {
+            // Multiplicamos por 2 porque el radio se convierte en diámetro total
+            float diameter = detectionDistance * 2f;
+            visionRangeObject.localScale = new Vector3(diameter, diameter, diameter);
+        }
+    }
+
+    // Permite ver los cambios en el tamaño inmediatamente desde el Inspector sin darle al Play
+    void OnValidate()
+    {
+        UpdateVisionRangeScale();
+    }
 
     void OnDrawGizmosSelected()
     {
@@ -116,5 +142,28 @@ public class DroneAI : MonoBehaviour
         );
     }
 
+    void OnCollisionStay(Collision collision)
+    {
+        PlayerHealth health = collision.gameObject
+            .GetComponentInParent<PlayerHealth>();
 
+        if (health == null)
+            return;
+
+        damageTimer += Time.deltaTime;
+
+        if (damageTimer >= 0.5f)
+        {
+            health.TakeDamage(damagePerSecond);
+            damageTimer = 0f;
+        }
+    }
+
+    void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.GetComponentInParent<PlayerHealth>() != null)
+        {
+            damageTimer = 0f;
+        }
+    }
 }

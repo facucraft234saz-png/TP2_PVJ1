@@ -9,11 +9,16 @@ public class CameraFollow : MonoBehaviour
 
     [Header("Rotación con Flechitas")]
     public float rotationSpeed = 120f; // Velocidad de giro al presionar las flechas
-    private float currentAngle = 0f;   // Ángulo actual de rotación orbital
+    private float currentAngle = 0f;   // Ángulo actual de rotación horizontal (Yaw)
+
+    [Header("Rotación Vertical (Límites)")]
+    public float minVerticalAngle = -10f; // Límite hacia abajo (ángulo mínimo)
+    public float maxVerticalAngle = 40f;  // Límite hacia arriba (ángulo máximo)
+    private float currentVerticalAngle = 0f; // Ángulo actual de rotación vertical (Pitch)
 
     void Update()
     {
-        // Rotar la cámara a la izquierda o derecha usando las flechitas del teclado
+        // Rotar la cámara a la izquierda o derecha usando las flechitas horizontales
         if (Input.GetKey(KeyCode.LeftArrow))
         {
             currentAngle -= rotationSpeed * Time.deltaTime;
@@ -22,6 +27,19 @@ public class CameraFollow : MonoBehaviour
         {
             currentAngle += rotationSpeed * Time.deltaTime;
         }
+
+        // Rotar la cámara hacia arriba o abajo usando las flechitas verticales
+        if (Input.GetKey(KeyCode.UpArrow))
+        {
+            currentVerticalAngle -= rotationSpeed * Time.deltaTime;
+        }
+        if (Input.GetKey(KeyCode.DownArrow))
+        {
+            currentVerticalAngle += rotationSpeed * Time.deltaTime;
+        }
+
+        // Aplicar los límites (Clamp) para que la cámara no se pase de largo al subir o bajar
+        currentVerticalAngle = Mathf.Clamp(currentVerticalAngle, minVerticalAngle, maxVerticalAngle);
     }
 
     // LateUpdate se ejecuta después de que todos los movimientos del jugador hayan terminado
@@ -29,10 +47,10 @@ public class CameraFollow : MonoBehaviour
     {
         if (player == null) return;
 
-        // Crear una rotación basada en el ángulo actual alrededor del eje Y
-        Quaternion rotation = Quaternion.Euler(0f, currentAngle, 0f);
+        // Crear una rotación basada tanto en el ángulo vertical como en el horizontal
+        Quaternion rotation = Quaternion.Euler(currentVerticalAngle, currentAngle, 0f);
 
-        // Aplicar la rotación al offset para que la cámara orbite alrededor del jugador
+        // Aplicar la rotación al offset para que la cámara orbite con inclinación
         Vector3 rotatedOffset = rotation * offset;
 
         // Calcula la posición deseada sumando la posición del jugador y el desfase rotado
